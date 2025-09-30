@@ -16,16 +16,23 @@ const registerUser = asyncHandler( async (req,res)=>{
     // return response  
     // if user not registed send error with proper message 
 
-    const {fullName,email,username,password} = req.body
-    console.log("email:",email);
 
+    // get user details from frontend 
+    const {fullName,email,username,password} = req.body
+    // do console.log(req.body)
+    // console.log("email:",email);
+
+
+    // validation - not empty 
     if(
         [fullName,email,username,password].some((field) => field?.trim()==="")
     ){
         throw new ApiError(400,"All fields are required")
     }
 
-    const existedUser = User.findOne({
+
+    // check if user already exists : username , email
+    const existedUser = await User.findOne({
         $or:[{ username },{ email }]
     })
 
@@ -33,8 +40,18 @@ const registerUser = asyncHandler( async (req,res)=>{
         throw new ApiError(409, "User with email or username already exists ")
     }
 
+    // check for images , check for avatar
     const avatarLocalPath = req.files?.avatar[0]?.path;
-    const coverImageLocalPath = req.files?.coverImage[0]?.path;
+    // we are able to do req.files because of middleware used in userRoute
+    // console.log(req.files);
+    //const coverImageLocalPath = req.files?.coverImage[0]?.path;
+    
+    let coverImageLocalPath;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
+        coverImageLocalPath = req.files.coverImage[0].path
+    }
+
+
 
     if(!avatarLocalPath){
         throw new ApiError(400,"Avatar file is required")
